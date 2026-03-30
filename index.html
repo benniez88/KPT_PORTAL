@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KPT-SVB Portal</title>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --bg:#0d0d14;--bg2:#16161f;--bg3:#1e1e2a;--bg4:#252535;
@@ -158,6 +159,13 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 
 mark{background:rgba(124,111,255,.22);color:var(--accent2);border-radius:2px;padding:0 1px;}
 
+.card-main{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;}
+.card-content{flex:1;min-width:0;}
+.qr-col{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.qr-host{width:86px;height:86px;background:#fff;border-radius:10px;padding:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);}
+.qr-host img,.qr-host canvas{max-width:100%;max-height:100%;display:block;}
+.qr-label{font-size:10px;color:var(--text3);text-align:center;line-height:1.35;max-width:86px;}
+
 /* EMPTY */
 .empty{text-align:center;padding:70px 20px;color:var(--text3);}
 .empty-ico{font-size:44px;opacity:.35;margin-bottom:14px;}
@@ -201,7 +209,11 @@ mark{background:rgba(124,111,255,.22);color:var(--accent2);border-radius:2px;pad
   .tab-icon{font-size:15px;}
   .theme-btn{width:42px;height:42px;}
   .card-footer{align-items:flex-start;}
+  .card-main{flex-direction:column;}
+  .qr-col{align-items:flex-start;}
+  .qr-label{max-width:none;text-align:left;}
 }
+
 </style>
 </head>
 <body>
@@ -324,10 +336,21 @@ function hl(text, matches, key) {
   return r+esc(ch.slice(last).join(''));
 }
 function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
+function escAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function copyText(btn, text) {
   navigator.clipboard.writeText(text).then(()=>{
     btn.classList.add('ok');btn.textContent='✓ คัดลอก';
     setTimeout(()=>{btn.classList.remove('ok');btn.textContent='📋 คัดลอก';},1600);
+  });
+}
+function mountQRCodes(scope=document){
+  scope.querySelectorAll('.qr-host').forEach(el=>{
+    if(el.dataset.qrMounted==='1') return;
+    const text = el.dataset.qr || '';
+    if(!text) return;
+    el.innerHTML='';
+    new QRCode(el,{text,width:74,height:74,correctLevel:QRCode.CorrectLevel.M});
+    el.dataset.qrMounted='1';
   });
 }
 function renderPag(id, results, page, perPage, setPage) {
@@ -477,18 +500,28 @@ function renderStaffPage(){
   }
   grid.innerHTML=items.map(({item:r,matches:m})=>`
     <div class="card amber">
-      <div class="card-row">
-        <span class="badge accent">${hl(r.id,m,'id')}</span>
-        <span class="badge amber">${hl(r.shop,m,'shop')}</span>
-      </div>
-      <div class="card-title">${hl(r.name,m,'name')}</div>
-      <div class="card-footer">
-        <div class="kv"><div class="kv-label">Login Key</div><div class="kv-val amber" style="font-size:13px;font-family:monospace;">${esc(r.key)}</div></div>
-        <button class="copy-btn" onclick="copyText(this,'ID: ${r.id}\\nName: ${r.name}\\nShop: ${r.shop}\\nKey: ${r.key}')">&#128203; คัดลอก</button>
+      <div class="card-main">
+        <div class="card-content">
+          <div class="card-row">
+            <span class="badge accent">${hl(r.id,m,'id')}</span>
+            <span class="badge amber">${hl(r.shop,m,'shop')}</span>
+          </div>
+          <div class="card-title">${hl(r.name,m,'name')}</div>
+          <div class="card-footer">
+            <div class="kv"><div class="kv-label">Login Key</div><div class="kv-val amber" style="font-size:13px;font-family:monospace;word-break:break-all;">${esc(r.key)}</div></div>
+            <button class="copy-btn" onclick="copyText(this,'ID: ${r.id}\\nName: ${r.name}\\nShop: ${r.shop}\\nKey: ${r.key}')">&#128203; คัดลอก</button>
+          </div>
+        </div>
+        <div class="qr-col">
+          <div class="qr-host" data-qr="${escAttr(r.key)}"></div>
+          <div class="qr-label">QR Login Key</div>
+        </div>
       </div>
     </div>`).join('');
+  mountQRCodes(grid);
   renderStaffPage2();
 }
+
 function renderStaffPage2(){
   renderPag('staff-pag',filteredStaff,staffPage,30,'setStaffPage');
 }
@@ -541,18 +574,28 @@ function renderProdPage(){
   }
   grid.innerHTML=items.map(({item:r,matches:m})=>`
     <div class="card purple">
-      <div class="card-row">
-        <span class="badge accent">${hl(r.co,m,'co')}</span>
-        <span class="badge gray" style="max-width:170px;overflow:hidden;text-overflow:ellipsis;" title="${esc(r.cc+' '+r.cn)}">${esc(r.cc)} ${esc(r.cn)}</span>
-      </div>
-      <div class="card-title">${hl(r.d,m,'d')}</div>
-      <div class="card-footer">
-        <div class="kv"><div class="kv-label">ราคา (บาท)</div><div class="kv-val accent">฿ ${r.p.toLocaleString('th-TH')}${r.p>=1000?`<span style="font-size:11px;color:var(--text3);font-weight:400;margin-left:4px;">≈${(r.p/1000).toFixed(1)}K</span>`:''}</div></div>
-        <button class="copy-btn" onclick="copyText(this,'Code: ${r.co}\\nDescription: ${r.d}\\nCategory: ${r.cc} ${r.cn}\\nPrice: ฿${r.p.toLocaleString()}')">&#128203; คัดลอก</button>
+      <div class="card-main">
+        <div class="card-content">
+          <div class="card-row">
+            <span class="badge accent">${hl(r.co,m,'co')}</span>
+            <span class="badge gray" style="max-width:170px;overflow:hidden;text-overflow:ellipsis;" title="${esc(r.cc+' '+r.cn)}">${esc(r.cc)} ${esc(r.cn)}</span>
+          </div>
+          <div class="card-title">${hl(r.d,m,'d')}</div>
+          <div class="card-footer">
+            <div class="kv"><div class="kv-label">ราคา (บาท)</div><div class="kv-val accent">฿ ${r.p.toLocaleString('th-TH')}${r.p>=1000?`<span style="font-size:11px;color:var(--text3);font-weight:400;margin-left:4px;">≈${(r.p/1000).toFixed(1)}K</span>`:''}</div></div>
+            <button class="copy-btn" onclick="copyText(this,'Code: ${r.co}\\nDescription: ${r.d}\\nCategory: ${r.cc} ${r.cn}\\nPrice: ฿${r.p.toLocaleString()}')">&#128203; คัดลอก</button>
+          </div>
+        </div>
+        <div class="qr-col">
+          <div class="qr-host" data-qr="${escAttr(r.co)}"></div>
+          <div class="qr-label">QR Product Code</div>
+        </div>
       </div>
     </div>`).join('');
+  mountQRCodes(grid);
   renderPag('prod-pag',filteredProd,prodPage,pp,'setProdPage');
 }
+
 function resetProd(){['prod-search','prod-pmin','prod-pmax'].forEach(id=>document.getElementById(id).value='');document.getElementById('prod-cat-filter').value='';document.getElementById('prod-sort').value='rel';document.getElementById('prod-clear').style.display='none';showProdEmpty();document.getElementById('prod-res-chip').style.display='none';}
 
 window.addEventListener('DOMContentLoaded',()=>{
