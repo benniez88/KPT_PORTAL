@@ -153,6 +153,11 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 .kv-val.teal{color:var(--teal);}
 .kv-val.accent{color:var(--accent2);}
 .kv-val.amber{color:var(--amber);}
+.pos-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.pos-chip{font-size:13px;}
+.brand-row{padding:8px 0;border-top:1px dashed var(--border);}
+.brand-row:last-of-type{margin-bottom:10px;}
+.brand-name{font-size:14px;color:var(--text);margin-bottom:6px;}
 .copy-btn{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;}
 .copy-btn:hover{border-color:var(--teal);color:var(--teal);}
 .copy-btn.ok{border-color:var(--teal);color:var(--teal);background:var(--tealbg);}
@@ -253,8 +258,8 @@ mark{background:rgba(124,111,255,.22);color:var(--accent2);border-radius:2px;pad
     <button class="reset-btn" onclick="resetShop()">&#10006; รีเซ็ต</button>
   </div>
   <div class="stats-row">
-    <div class="chip">POS ทั้งหมด <strong id="shop-total">-</strong></div>
-    <div class="chip teal" id="shop-res-chip" style="display:none">พบ <strong id="shop-res-count">0</strong> รายการ</div>
+    <div class="chip">ร้าน <strong id="shop-total">-</strong> · POS <strong id="shop-pos-total">-</strong></div>
+    <div class="chip teal" id="shop-res-chip" style="display:none">พบ <strong id="shop-res-count">0</strong> ร้าน</div>
   </div>
   <div class="grid grid-2" id="shop-grid"></div>
   <div class="pag" id="shop-pag"></div>
@@ -366,6 +371,8 @@ function smartSearch(data, fuse, keys, q){
   return fuse.search(q).map(r=>({item:r.item,matches:r.matches}));
 }
 function escAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// ข้อความสำหรับปุ่มคัดลอกของหน้าที่แสดงอยู่ (เก็บแยกจาก HTML เพื่อไม่ให้ ' หรือ " ในข้อมูลทำให้ปุ่มพัง)
+const COPY={shop:[],staff:[],prod:[]};
 function copyText(btn, text) {
   navigator.clipboard.writeText(text).then(()=>{
     btn.classList.add('ok');btn.textContent='✓ คัดลอก';
@@ -424,14 +431,37 @@ function switchTab(t){
 // ========== SHOP & POS ==========
 const SHOP_DATA = [{"loc":"AIRSIDE","shop":"TE1","site":"3630","sname":"TOUCH OF THAILAND","pos":"T353","tel":"TP:6508, SPA:6507","units":"T1DE4-01, T1DE4-02, T1DE4-03"},{"loc":"AIRSIDE","shop":"TE1","site":"3630","sname":"TOUCH OF THAILAND","pos":"T354","tel":"TP:6508, SPA:6507","units":"T1DE4-01, T1DE4-02, T1DE4-03"},{"loc":"AIRSIDE","shop":"TE1","site":"3630","sname":"TOUCH OF THAILAND","pos":"T405","tel":"TP:6508, SPA:6507","units":"T1DE4-01, T1DE4-02, T1DE4-03"},{"loc":"AIRSIDE","shop":"TE2","site":"3631","sname":"HEALTH & BEAUTY GALLERIA","pos":"T356","tel":"6509","units":"T1DE4-05, T1DE4-06"},{"loc":"AIRSIDE","shop":"TE2","site":"3631","sname":"HEALTH & BEAUTY GALLERIA","pos":"T357","tel":"6509","units":"T1DE4-05, T1DE4-06"},{"loc":"AIRSIDE","shop":"TE3","site":"3632","sname":"KING POWER","pos":"T358","tel":"6570","units":"T1DE4-13"},{"loc":"AIRSIDE","shop":"TE4","site":"3633","sname":"MEMORIES OF THAILAND","pos":"T359","tel":"6512","units":"T1DE4-45"},{"loc":"AIRSIDE","shop":"TE5","site":"3634","sname":"JIM THOMPSON","pos":"T360","tel":"6513","units":"T1DE4-50"},{"loc":"AIRSIDE","shop":"TE6","site":"3635","sname":"SPORT SELECT","pos":"T361","tel":"6521","units":"T1CE4-02, T1CE4-03"},{"loc":"AIRSIDE","shop":"TE6","site":"3635","sname":"SPORT SELECT","pos":"T362","tel":"6521","units":"T1CE4-02, T1CE4-03"},{"loc":"AIRSIDE","shop":"TE8","site":"3636","sname":"KING POWER SPACE","pos":"T363","tel":"6520","units":"T1AE4-08"},{"loc":"AIRSIDE","shop":"TE9","site":"3637","sname":"ATLAS","pos":"T384","tel":"2782","units":"T1AE4-06"},{"loc":"AIRSIDE","shop":"TW1","site":"3648","sname":"TOUCH OF THAILAND","pos":"T366","tel":"JIM:6553,TP:6554","units":"T1DW4-48"},{"loc":"AIRSIDE","shop":"TW1","site":"3648","sname":"TOUCH OF THAILAND","pos":"T367","tel":"JIM:6553,TP:6554","units":"T1DW4-48"},{"loc":"AIRSIDE","shop":"TW1","site":"3648","sname":"JIM THOMPSON","pos":"T368","tel":"JIM:6553,TP:6554","units":"T1DW4-48"},{"loc":"AIRSIDE","shop":"TW1","site":"3648","sname":"JIM THOMPSON","pos":"T369","tel":"JIM:6553,TP:6554","units":"T1DW4-48"},{"loc":"AIRSIDE","shop":"TW2","site":"3649","sname":"TASTES OF THAILAND","pos":"T370","tel":"6551","units":"T1DW4-45, T1DW4-46"},{"loc":"AIRSIDE","shop":"TW2","site":"3649","sname":"TASTES OF THAILAND","pos":"T371","tel":"6551","units":"T1DW4-45, T1DW4-46"},{"loc":"AIRSIDE","shop":"TW3","site":"3650","sname":"MEMORIES OF THAILAND","pos":"T372","tel":"6541","units":"T1DW4-05"},{"loc":"AIRSIDE","shop":"TW3","site":"3650","sname":"MEMORIES OF THAILAND","pos":"T398","tel":"6541","units":"T1DW4-05"},{"loc":"AIRSIDE","shop":"TW4","site":"3651","sname":"SCENTS OF THAILAND","pos":"T355","tel":"6555","units":"T1DW4-02"},{"loc":"AIRSIDE","shop":"TW4","site":"3651","sname":"SCENTS OF THAILAND","pos":"T373","tel":"6555","units":"T1DW4-02"},{"loc":"AIRSIDE","shop":"TW5","site":"3652","sname":"TASTES OF THAILAND","pos":"T374","tel":"6561","units":"T1EW4-02"},{"loc":"AIRSIDE","shop":"TW5","site":"3652","sname":"TASTES OF THAILAND","pos":"T375","tel":"6561","units":"T1EW4-02"},{"loc":"AIRSIDE","shop":"TW6","site":"3653","sname":"KING POWER SPACE","pos":"T376","tel":"6559","units":"T1EW4-03"},{"loc":"AIRSIDE","shop":"TW7","site":"3654","sname":"THE THAI COLLECTION","pos":"T377","tel":"6514","units":"T1EW4-11"},{"loc":"AIRSIDE","shop":"TW9","site":"3655","sname":"HEALTH & BEAUTY GALLERIA","pos":"T378","tel":"6566","units":"T1GW4-07"},{"loc":"AIRSIDE","shop":"TW9","site":"3655","sname":"HEALTH & BEAUTY GALLERIA","pos":"T379","tel":"6566","units":"T1GW4-07"},{"loc":"AIRSIDE","shop":"TW10","site":"3656","sname":"SPORT SELECT","pos":"T380","tel":"6562","units":"T1GW4-03"},{"loc":"AIRSIDE","shop":"TW10","site":"3656","sname":"SPORT SELECT","pos":"T381","tel":"6562","units":"T1GW4-03"},{"loc":"AIRSIDE  (SAT-1)","shop":"STE1","site":"36SA","sname":"MEMORIES OF THAILAND","pos":"T399","tel":"6516","units":"T1SE3-06"},{"loc":"AIRSIDE  (SAT-1)","shop":"STE1","site":"36SA","sname":"MEMORIES OF THAILAND","pos":"T400","tel":"6516","units":"T1SE3-06"},{"loc":"AIRSIDE  (SAT-1)","shop":"STE1","site":"36SA","sname":"MEMORIES OF THAILAND","pos":"T401","tel":"6516","units":"T1SE3-06"},{"loc":"TRANSIT","shop":"SE1","site":"3625","sname":"MEMORIES OF THAILAND","pos":"T385","tel":"6352","units":"T1AE3-01"},{"loc":"TRANSIT","shop":"SW1","site":"3626","sname":"MEMORIES OF THAILAND","pos":"T364","tel":"6362","units":"T1GW3-01"},{"loc":"LANDSIDE","shop":"AL3","site":"3695","sname":"TAX FREE","pos":"T407","tel":"6578","units":"T1ME2-11"},{"loc":"LANDSIDE","shop":"AL4","site":"3696","sname":"TAX FREE","pos":"T409","tel":"6579","units":"T1MW2-16A"},{"loc":"LANDSIDE","shop":"LS1","site":"3690","sname":"TAX FREE","pos":"T406","tel":"6502","units":"T1ME4-05"},{"loc":"LANDSIDE","shop":"LS6","site":"3681","sname":"TAX FREE","pos":"T386","tel":"6506","units":"T1MW4-03, T1MW4-04"},{"loc":"AIRSIDE","shop":"RE1","site":"3639","sname":"SAI JAI THAI","pos":"T392","tel":"6531","units":"T1DE4-41"},{"loc":"AIRSIDE","shop":"RE2","site":"3640","sname":"GOLDEN PLACE","pos":"T352","tel":"6532","units":"T1DE4-42"},{"loc":"AIRSIDE","shop":"RE3","site":"3641","sname":"DOI TUNG","pos":"T393","tel":"6533","units":"T1DE4-43"},{"loc":"AIRSIDE","shop":"RE4","site":"3642","sname":"NABHA","pos":"T394","tel":"6534","units":"T1DE4-44"},{"loc":"AIRSIDE","shop":"RW1","site":"3643","sname":"SACIT","pos":"T382","tel":"6537","units":"T1DW4-10"},{"loc":"AIRSIDE","shop":"RW2","site":"3644","sname":"DOI TUNG","pos":"T383","tel":"6538","units":"T1DW4-09"},{"loc":"AIRSIDE","shop":"RW3","site":"3645","sname":"SAI JAI THAI","pos":"T390","tel":"6539","units":"T1DW4-08"},{"loc":"AIRSIDE","shop":"RW4","site":"3646","sname":"NABHA","pos":"T391","tel":"6540","units":"T1DW4-07"},{"loc":"AIRSIDE","shop":"RW5","site":"3647","sname":"GOLDEN PLACE","pos":"T365","tel":"6536","units":"T1DW4-06"},{"loc":"LANDSIDE","shop":"LB1","site":"3680","sname":"ROYAL PROJECT","pos":"T389","tel":"6212","units":"T1MB1-04"},{"loc":"DOMESTIC","shop":"SD1","site":"3670","sname":"ROYAL PROJECT","pos":"T388","tel":"6260","units":"T1BE2-02"},{"loc":"AIRSIDE","shop":"OTOP-E","site":"3638","sname":"OTOP ศาลาไทย (EAST)","pos":"T397","tel":"6510","units":"D4-001E"},{"loc":"AIRSIDE","shop":"OTOP-W","site":"3657","sname":"OTOP ศาลาไทย (WEST)","pos":"T395","tel":"6558","units":"D4-001F"},{"loc":"AIRSIDE","shop":"OTOP-W","site":"3657","sname":"OTOP ศาลาไทย (WEST)","pos":"T396","tel":"6558","units":"D4-001F"},{"loc":"LANDSIDE","shop":"OTOP พช-E","site":"3682","sname":"OTOP PREMIUM","pos":"T387","tel":"6523","units":"T4-080B"},{"loc":"AIRSIDE   (SAT-1)","shop":"STW1","site":"36SB","sname":"ROYAL PROJECT","pos":"T402","tel":"6524","units":"T1SW3-08B"},{"loc":"AIRSIDE   (SAT-1)","shop":"STW1","site":"36SB","sname":"ROYAL PROJECT","pos":"T403","tel":"6524","units":"T1SW3-08B"},{"loc":"AIRSIDE   (SAT-1)","shop":"STW1","site":"36SB","sname":"ROYAL PROJECT","pos":"T404","tel":"6524","units":"T1SW3-08B"},{"loc":"AIRSIDE","shop":"TE7","site":"3658","sname":"BOOTS","pos":"","tel":"6527","units":"T1CE4-10, T1CE4-11"},{"loc":"LANDSIDE","shop":"OTOP พช-W","site":"3683","sname":"OTOP PREMIUM","pos":"","tel":"6522","units":"T4-002FF"},{"loc":"AIRSIDE  (SAT-1)","shop":"STE Back office","site":"","sname":"BACK OFFICE","pos":"","tel":"6526"},{"loc":"LANDSIDE","shop":"SD Back office","site":"","sname":"BACK OFFICE","pos":"","tel":"6256"},{"loc":"AIRSIDE","shop":"TE Back office","site":"","sname":"BACK OFFICE","pos":"","tel":"6515"},{"loc":"AIRSIDE","shop":"TW1 Back office","site":"","sname":"BACK OFFICE","pos":"","tel":"6354"},{"loc":"AIRSIDE","shop":"TW9 Back office","site":"","sname":"BACK OFFICE","pos":"","tel":"6565"}];
 let fuseShop, filteredShop=[], shopPage=1;
+// รวม POS ของร้านเดียวกัน (loc + shop + site) ให้เป็น 1 การ์ด
+// sname/pos เก็บเป็นข้อความคั่นด้วย ", " เพื่อให้ค้นหาตรงเป๊ะรายตัวได้, brands ใช้ตอนแสดงผล
+const SHOP_GROUPS = (()=>{
+  const map=new Map();
+  SHOP_DATA.forEach(r=>{
+    const k=r.loc+'|'+r.shop+'|'+r.site;
+    if(!map.has(k)) map.set(k,{loc:r.loc,shop:r.shop,site:r.site,tel:r.tel,units:r.units,brands:[]});
+    const g=map.get(k);
+    let b=g.brands.find(b=>b.sname===r.sname);
+    if(!b){b={sname:r.sname,pos:[]};g.brands.push(b);}
+    if(r.pos) b.pos.push(r.pos);
+  });
+  return [...map.values()].map(g=>({...g,sname:g.brands.map(b=>b.sname).filter(Boolean).join(', '),pos:g.brands.flatMap(b=>b.pos).join(', ')}));
+})();
+// ไฮไลต์เฉพาะส่วนของข้อความรวม (เริ่มที่ off) เช่น POS ตัวเดียวในรายการ "T353, T354"
+function hlSeg(text, matches, key, off){
+  const m=matches&&matches.find(m=>m.key===key);
+  if(!m||!m.indices) return esc(text);
+  const len=String(text).length;
+  const idx=m.indices.filter(([s,e])=>e>=off&&s<off+len).map(([s,e])=>[Math.max(s,off)-off,Math.min(e,off+len-1)-off]);
+  return hl(text,[{key,indices:idx}],key);
+}
 
 
 function initShop(){
-  fuseShop = new Fuse(SHOP_DATA,{keys:[{name:'shop',weight:.35},{name:'pos',weight:.3},{name:'tel',weight:.15},{name:'site',weight:.12},{name:'sname',weight:.08},{name:'units',weight:.1}],threshold:.3,includeMatches:true,ignoreLocation:true,minMatchCharLength:1});
-  const locs=[...new Set(SHOP_DATA.map(r=>r.loc))].sort();
+  fuseShop = new Fuse(SHOP_GROUPS,{keys:[{name:'shop',weight:.35},{name:'pos',weight:.3},{name:'tel',weight:.15},{name:'site',weight:.12},{name:'sname',weight:.08},{name:'units',weight:.1}],threshold:.3,includeMatches:true,ignoreLocation:true,minMatchCharLength:1});
+  const locs=[...new Set(SHOP_GROUPS.map(r=>r.loc))].sort();
   const sel=document.getElementById('shop-loc-filter');
   locs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;sel.appendChild(o);});
-  document.getElementById('shop-total').textContent=SHOP_DATA.filter(r=>r.pos).length;
+  document.getElementById('shop-total').textContent=SHOP_GROUPS.filter(g=>g.pos).length;
+  document.getElementById('shop-pos-total').textContent=SHOP_DATA.filter(r=>r.pos).length;
   document.getElementById('shop-search').addEventListener('input',debounce(filterShop,150));
   filterShop();
 }
@@ -439,7 +469,7 @@ function filterShop(){
   const q=document.getElementById('shop-search').value.trim();
   const loc=document.getElementById('shop-loc-filter').value;
   document.getElementById('shop-clear').style.display=q?'block':'none';
-  let res = smartSearch(SHOP_DATA, fuseShop, ['shop','pos','units','tel','site','sname'], q);
+  let res = smartSearch(SHOP_GROUPS, fuseShop, ['shop','pos','units','tel','site','sname'], q);
   if(loc) res=res.filter(r=>r.item.loc===loc);
   filteredShop=res; shopPage=1;
   const chip=document.getElementById('shop-res-chip');
@@ -454,21 +484,37 @@ function renderShopPage(){
     grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-ico">&#128205;</div><div class="empty-t">ไม่พบข้อมูล</div><div class="empty-s">ลองค้นหาคำอื่น</div></div>`;
     document.getElementById('shop-pag').innerHTML='';return;
   }
-  grid.innerHTML=items.map(({item:r,matches:m})=>`
+  const multi=r=>r.brands.length>1;
+  COPY.shop=items.map(({item:r})=>[
+    'Shop: '+r.shop, r.site&&'Site: '+r.site,
+    multi(r) ? r.brands.map(b=>'- '+b.sname+(b.pos.length?' (POS: '+b.pos.join(', ')+')':'')).join('\n')
+             : [r.sname&&'Shop Name: '+r.sname, r.pos&&'POS: '+r.pos].filter(Boolean).join('\n'),
+    r.tel&&'Tel: '+r.tel, r.units&&'Units: '+r.units, 'Location: '+r.loc
+  ].filter(Boolean).join('\n'));
+  grid.innerHTML=items.map(({item:r,matches:m},i)=>{
+    let sOff=0, pOff=0;
+    const chips=b=>b.pos.map(p=>{const h=hlSeg(p,m,'pos',pOff);pOff+=p.length+2;return `<span class="badge teal pos-chip">${h}</span>`;}).join('');
+    const brands=r.brands.map(b=>{
+      const name=hlSeg(b.sname,m,'sname',sOff); if(b.sname) sOff+=b.sname.length+2;
+      return multi(r)
+        ? `<div class="brand-row"><div class="brand-name">${name}</div>${b.pos.length?`<div class="pos-chips">${chips(b)}</div>`:''}</div>`
+        : `<div class="card-title">${name}</div>${b.pos.length?`<div class="kv" style="margin-bottom:10px"><div class="kv-label">POS No. (${b.pos.length})</div><div class="pos-chips">${chips(b)}</div></div>`:''}`;
+    }).join('');
+    return `
     <div class="card teal">
       <div class="card-row">
         <span class="badge accent">${hl(r.shop,m,'shop')}</span>
         <span class="badge gray">${esc(r.loc)}</span>
         ${r.site?`<span class="badge teal">${hl(r.site,m,'site')}</span>`:''}
       </div>
-      <div class="card-title">${hl(r.sname,m,'sname')}</div>
+      ${multi(r)?`<div class="kv-label" style="margin-bottom:4px">${r.brands.length} แบรนด์ · POS ${r.pos.split(', ').length} เครื่อง</div>`:''}
+      ${brands}
       <div class="card-footer">
-        ${r.pos?`<div class="kv"><div class="kv-label">POS No.</div><div class="kv-val teal">${hl(r.pos,m,'pos')}</div></div>`:''}
         ${r.tel?`<div class="kv"><div class="kv-label">Tel.</div><div class="kv-val amber">${hl(r.tel,m,'tel')}</div></div>`:''}
         ${r.units?`<div class="kv"><div class="kv-label">Units</div><div class="kv-val" style="color:var(--text2);font-size:13px;">${hl(r.units,m,'units')}</div></div>`:''}
-        <button class="copy-btn" onclick="copyText(this,'Shop: ${r.shop}${r.site?'\\nSite: '+r.site:''}${r.sname?'\\nShop Name: '+r.sname:''}${r.pos?'\\nPOS: '+r.pos:''}${r.tel?'\\nTel: '+r.tel:''}${r.units?'\\nUnits: '+r.units:''}\\nLocation: ${r.loc}')">&#128203; คัดลอก</button>
+        <button class="copy-btn" onclick="copyText(this,COPY.shop[${i}])">&#128203; คัดลอก</button>
       </div>
-    </div>`).join('');
+    </div>`;}).join('');
   renderPag('shop-pag',filteredShop,shopPage,pp,'setShopPage');
 }
 function setShopPage(p){
@@ -529,7 +575,8 @@ function renderStaffPage(){
     grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-ico">&#128100;</div><div class="empty-t">ไม่พบข้อมูล</div><div class="empty-s">ลองค้นหาคำอื่น</div></div>`;
     document.getElementById('staff-pag').innerHTML='';return;
   }
-  grid.innerHTML=items.map(({item:r,matches:m})=>`
+  COPY.staff=items.map(({item:r})=>`ID: ${r.id}\nName: ${r.name}\nShop: ${r.shop}\nKey: ${r.key}`);
+  grid.innerHTML=items.map(({item:r,matches:m},i)=>`
     <div class="card amber">
       <div class="card-main">
         <div class="card-content">
@@ -540,7 +587,7 @@ function renderStaffPage(){
           <div class="card-title">${hl(r.name,m,'name')}</div>
           <div class="card-footer">
             <div class="kv"><div class="kv-label">Login Key</div><div class="kv-val amber" style="font-size:13px;font-family:monospace;word-break:break-all;">${esc(r.key)}</div></div>
-            <button class="copy-btn" onclick="copyText(this,'ID: ${r.id}\\nName: ${r.name}\\nShop: ${r.shop}\\nKey: ${r.key}')">&#128203; คัดลอก</button>
+            <button class="copy-btn" onclick="copyText(this,COPY.staff[${i}])">&#128203; คัดลอก</button>
           </div>
         </div>
         <div class="qr-col">
@@ -603,7 +650,8 @@ function renderProdPage(){
     grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-ico">&#128577;</div><div class="empty-t">ไม่พบสินค้า</div><div class="empty-s">ลองพิมพ์คำอื่น หรือลด filter</div></div>`;
     document.getElementById('prod-pag').innerHTML='';return;
   }
-  grid.innerHTML=items.map(({item:r,matches:m})=>`
+  COPY.prod=items.map(({item:r})=>`Code: ${r.co}\nDescription: ${r.d}\nCategory: ${r.cc} ${r.cn}\nPrice: ฿${r.p.toLocaleString()}`);
+  grid.innerHTML=items.map(({item:r,matches:m},i)=>`
     <div class="card purple">
       <div class="card-main">
         <div class="card-content">
@@ -614,7 +662,7 @@ function renderProdPage(){
           <div class="card-title">${hl(r.d,m,'d')}</div>
           <div class="card-footer">
             <div class="kv"><div class="kv-label">ราคา (บาท)</div><div class="kv-val accent">฿ ${r.p.toLocaleString('th-TH')}${r.p>=1000?`<span style="font-size:11px;color:var(--text3);font-weight:400;margin-left:4px;">≈${(r.p/1000).toFixed(1)}K</span>`:''}</div></div>
-            <button class="copy-btn" onclick="copyText(this,'Code: ${r.co}\\nDescription: ${r.d}\\nCategory: ${r.cc} ${r.cn}\\nPrice: ฿${r.p.toLocaleString()}')">&#128203; คัดลอก</button>
+            <button class="copy-btn" onclick="copyText(this,COPY.prod[${i}])">&#128203; คัดลอก</button>
           </div>
         </div>
         <div class="qr-col">
